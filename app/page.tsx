@@ -21,7 +21,7 @@ export default function ChatDemo() {
  
   return (
     <div className="flex min-h-screen items-center justify-center w-full">
-      <div className="flex h-[600px] w-full max-w-3xl border rounded-lg shadow-sm p-6 sm:border sm:p-6 border-0 p-0">
+      <div className="flex sm:h-[600px] h-[100dvh] w-full max-w-3xl overflow-hidden p-0 pt-8 sm:p-6 border-0 sm:border rounded-none sm:rounded-lg shadow-sm">
         <Chat
           className="grow"
           messages={filteredMessages}
