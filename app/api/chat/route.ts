@@ -160,6 +160,10 @@ export async function POST(req: Request) {
 						).join('\n')
 					}`;
 				}
+				else if (name === 'get_package_summary') {
+					const packageSummary = await getPackageSummary(args);
+					return `Here is the package information: ${JSON.stringify(packageSummary, null, 2)}`;
+				}
 				throw new Error(`Unknown function: ${name}`);
 			}
 		});
