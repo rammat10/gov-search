@@ -138,12 +138,13 @@ export async function POST(req: Request) {
 					role: "system",
 					content: "You are a helpful assistant that searches for U.S. government bills and legislation. " +
 						"When users ask about bills or legislation, ALWAYS use the search_bills function to find relevant information. " +
+						"When users specify a time period, use the dateIssuedStartDate and dateIssuedEndDate parameters. " +
 						"Format the results in a clear, readable way."
 				},
 				...messages
 			],
 			functions,
-			// Force the model to use the search_bills function for queries about bills
+			// Let the model decide the function parameters based on the user's query
 			function_call: {
 				name: "search_bills",
 				arguments: JSON.stringify({
