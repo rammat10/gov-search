@@ -21,9 +21,9 @@ export default function ChatDemo() {
  
   return (
     <div className="flex min-h-screen items-center justify-center w-full">
-      <div className="flex sm:h-[600px] h-[100dvh] w-full max-w-3xl overflow-hidden p-0 pt-8 sm:p-6 border-0 sm:border rounded-none sm:rounded-lg shadow-sm">
+      <div className="flex h-[100dvh] sm:h-[600px] w-full max-w-3xl overflow-hidden p-0 pt-4 sm:p-6 border-0 sm:border rounded-none sm:rounded-lg shadow-none sm:shadow-sm">
         <Chat
-          className="grow"
+          className="grow overflow-hidden px-2 sm:px-0"
           messages={filteredMessages}
           handleSubmit={handleSubmit}
           input={input}
