@@ -74,11 +74,10 @@ async function searchBills(params: SearchBillsParams) {
 	try {
 		return {
 			count: data.count,
-			bills: data.results.map((bill: any) => {
+			bills: data.results.map((bill: { packageId: string; title?: string; dateIssued?: string; resultLink?: string }) => {
 				// Example packageId: BILLS-118hr10150ih
 				const parts = bill.packageId.split('-');
 				const congressPart = parts[1]; // 118hr10150ih
-				
 				// Extract congress number (118)
 				const congress = congressPart.match(/^\d+/)?.[0] || 'Unknown';
 				
@@ -214,17 +213,22 @@ export async function POST(req: Request) {
 
 		return result.toDataStreamResponse();
 
-	} catch (error) {
+	} catch (err: unknown) {
+		// Type guard for Error objects
+		const error = err instanceof Error ? err : new Error(String(err));
+		
 		console.error('Detailed error:', {
 			name: error.name,
 			message: error.message,
-			stack: error.stack,
+			stack: error.stack || 'No stack trace available'
 		});
+
 		console.error('Error:', error);
+		
 		return new Response(
 			JSON.stringify({ 
 				error: 'Failed to fetch government data',
-				details: error instanceof Error ? error.message : 'Unknown error'
+				details: error.message
 			}), 
 			{
 				status: 500,
