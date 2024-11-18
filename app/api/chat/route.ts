@@ -1,5 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
+import { rateLimit } from "@/lib/rate-limiter";
+import { headers } from "next/headers";
 
 const model = openai("gpt-4o-mini");
 
@@ -49,7 +51,18 @@ const functions = [
 ];
 
 // Function implementations
-async function searchBills(params: any) {
+interface SearchBillsParams {
+	query: string;
+	dateIssuedStartDate?: string;
+	dateIssuedEndDate?: string;
+	pageSize?: number;
+}
+
+interface PackageSummaryParams {
+	packageId: string;
+}
+
+async function searchBills(params: SearchBillsParams) {
 	// Calculate default dates if not provided
 	const today = new Date();
 	const oneYearAgo = new Date();
@@ -108,7 +121,7 @@ async function searchBills(params: any) {
 	};
 }
 
-async function getPackageSummary(params: any) {
+async function getPackageSummary(params: PackageSummaryParams) {
 	const response = await fetch(
 		`https://api.govinfo.gov/packages/${params.packageId}/summary`,
 		{
@@ -127,10 +140,38 @@ async function getPackageSummary(params: any) {
 }
 
 export async function POST(req: Request) {
-	const { messages } = await req.json();
-	const userMessage = messages[messages.length - 1].content;
-
 	try {
+		// Get IP address from headers - now properly awaited
+		const headersList = await headers();
+		const forwardedFor = headersList.get('x-forwarded-for');
+		const ip = forwardedFor ? forwardedFor.split(',')[0] : 'unknown';
+		
+		// Check rate limit
+		const rateLimitResult = await rateLimit(ip);
+		
+		if (!rateLimitResult.success) {
+			return new Response(
+				JSON.stringify({
+					error: 'Rate limit exceeded',
+					reset: rateLimitResult.reset,
+					limit: rateLimitResult.limit,
+					remaining: rateLimitResult.remaining,
+				}),
+				{
+					status: 429,
+					headers: {
+						'Content-Type': 'application/json',
+						'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+						'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+						'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
+					},
+				}
+			);
+		}
+
+		const { messages } = await req.json();
+		const userMessage = messages[messages.length - 1].content;
+
 		const result = streamText({
 			model,
 			messages: [
@@ -144,7 +185,6 @@ export async function POST(req: Request) {
 				...messages
 			],
 			functions,
-			// Let the model decide the function parameters based on the user's query
 			function_call: {
 				name: "search_bills",
 				arguments: JSON.stringify({
@@ -152,17 +192,22 @@ export async function POST(req: Request) {
 					pageSize: 5
 				})
 			},
-			async onFunctionCall({ name, arguments: args }) {
+			async onFunctionCall({ name, arguments: args }: { name: string; arguments: any }) {
 				if (name === 'search_bills') {
-					const searchResults = await searchBills(args);
+					const searchResults = await searchBills(args as SearchBillsParams);
 					return `Here are the most recent bills I found:\n\n${
-						searchResults.bills.map((bill: any) => 
+						searchResults.bills.map((bill: {
+							title: string;
+							congress: string;
+							dateIssued: string;
+							url: string;
+						}) => 
 							`- ${bill.title}\n  Congress: ${bill.congress}\n  Date: ${bill.dateIssued}\n  Link: ${bill.url}\n`
 						).join('\n')
 					}`;
 				}
 				else if (name === 'get_package_summary') {
-					const packageSummary = await getPackageSummary(args);
+					const packageSummary = await getPackageSummary(args as PackageSummaryParams);
 					return `Here is the package information: ${JSON.stringify(packageSummary, null, 2)}`;
 				}
 				throw new Error(`Unknown function: ${name}`);
@@ -172,9 +217,12 @@ export async function POST(req: Request) {
 		return result.toDataStreamResponse();
 	} catch (error) {
 		console.error('Error:', error);
-		return new Response(JSON.stringify({ error: 'Failed to fetch government data' }), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({ error: 'Failed to fetch government data' }), 
+			{
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	}
 }
