@@ -58,75 +58,75 @@ export function Chat({
   const isTyping = lastMessage?.role === "user"
 
   return (
-    <ChatContainer className={className}>
-      {isEmpty && append && suggestions ? (
-        <PromptSuggestions
-          label="Try these prompts ✨"
-          append={append}
-          suggestions={suggestions}
-        />
-      ) : null}
+    <div className={cn("flex flex-col h-full", className)}>
+      {/* Messages section - scrollable */}
+      <div className="flex-1 overflow-y-auto pt-4 sm:pt-6">
+        {isEmpty && append && suggestions ? (
+          <div className="px-4 sm:px-6">
+            <PromptSuggestions
+              label="Try these prompts ✨"
+              append={append}
+              suggestions={suggestions}
+            />
+          </div>
+        ) : null}
 
-      {messages.length > 0 ? (
-        <ChatMessages messages={messages}>
-          <MessageList
-            messages={messages}
-            isTyping={isTyping}
-            messageOptions={(message) => ({
-              actions: onRateResponse ? (
-                <>
-                  <div className="border-r pr-1">
+        {messages.length > 0 ? (
+          <div className="px-4 sm:px-6">
+            <ChatMessages messages={messages}>
+              <MessageList
+                messages={messages}
+                isTyping={isTyping}
+                messageOptions={(message) => ({
+                  actions: onRateResponse ? (
+                    <>
+                      <div className="border-r pr-1">
+                        <CopyButton
+                          content={message.content}
+                          copyMessage="Copied response to clipboard!"
+                        />
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6"
+                        onClick={() => onRateResponse(message.id, "thumbs-up")}
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6"
+                        onClick={() => onRateResponse(message.id, "thumbs-down")}
+                      >
+                        <ThumbsDown className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
                     <CopyButton
                       content={message.content}
                       copyMessage="Copied response to clipboard!"
                     />
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    onClick={() => onRateResponse(message.id, "thumbs-up")}
-                  >
-                    <ThumbsUp className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    onClick={() => onRateResponse(message.id, "thumbs-down")}
-                  >
-                    <ThumbsDown className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <CopyButton
-                  content={message.content}
-                  copyMessage="Copied response to clipboard!"
-                />
-              ),
-            })}
-          />
-        </ChatMessages>
-      ) : null}
+                  ),
+                })}
+              />
+            </ChatMessages>
+          </div>
+        ) : null}
+      </div>
 
-      <ChatForm
-        className="mt-auto"
-        isPending={isGenerating || isTyping}
-        handleSubmit={handleSubmit}
-      >
-        {({ files, setFiles }) => (
-          <MessageInput
-            value={input}
-            onChange={handleInputChange}
-            // allowAttachments
-            files={files}
-            setFiles={setFiles}
-            stop={stop}
-            isGenerating={isGenerating}
-          />
-        )}
-      </ChatForm>
-    </ChatContainer>
+      {/* Input section - fixed at bottom */}
+      <div className="border-t bg-background p-4 sm:p-6">
+        <MessageInput
+          value={input}
+          onChange={handleInputChange}
+          onSubmit={handleSubmit}
+          isGenerating={isGenerating}
+          stop={stop}
+        />
+      </div>
+    </div>
   )
 }
 Chat.displayName = "Chat"
