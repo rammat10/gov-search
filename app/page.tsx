@@ -16,12 +16,15 @@ export default function ChatDemo() {
     isLoading,
   } = useChat()
  
+  // filter out messages that have no content
+  const filteredMessages = messages.filter((message) => message.content !== '');
+ 
   return (
     <div className="flex min-h-screen items-center justify-center w-full p-4">
       <div className="flex h-[600px] w-full max-w-3xl border rounded-lg shadow-sm p-4">
         <Chat
           className="grow"
-          messages={messages}
+          messages={filteredMessages}
           handleSubmit={handleSubmit}
           input={input}
           handleInputChange={handleInputChange}
