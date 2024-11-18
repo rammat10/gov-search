@@ -1,13 +1,13 @@
 "use client"
 
-import React, { useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowUp, FileIcon, Paperclip, Square, X } from "lucide-react"
+import React, { useRef, useState } from "react"
 import { omit } from "remeda"
 
-import { cn } from "@/lib/utils"
-import { useAutosizeTextArea } from "@/hooks/use-autosize-textarea"
 import { Button } from "@/components/ui/button"
+import { useAutosizeTextArea } from "@/hooks/use-autosize-textarea"
+import { cn } from "@/lib/utils"
 
 interface MessageInputBaseProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -89,7 +89,7 @@ export function MessageInput({
       .filter((file) => file !== null)
 
     if (props.allowAttachments && files.length > 0) {
-      addFiles(files)
+      addFiles(files as File[])
     }
   }
 

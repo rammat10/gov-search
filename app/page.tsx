@@ -1,14 +1,11 @@
 "use client"
  
-import { type UseChatOptions, useChat } from "ai/react"
+import { useChat } from "ai/react"
  
 import { Chat } from "@/components/ui/chat"
+
  
-type ChatDemoProps = {
-  initialMessages?: UseChatOptions["initialMessages"]
-}
- 
-export default function ChatDemo(props: ChatDemoProps) {
+export default function ChatDemo() {
   const {
     messages,
     input,
@@ -17,7 +14,7 @@ export default function ChatDemo(props: ChatDemoProps) {
     append,
     stop,
     isLoading,
-  } = useChat(props)
+  } = useChat()
  
   return (
     <div className="flex min-h-screen items-center justify-center w-full p-4">
