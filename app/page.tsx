@@ -20,10 +20,10 @@ export default function ChatDemo() {
   const filteredMessages = messages.filter((message) => message.content !== '');
  
   return (
-    <div className="flex min-h-screen items-center justify-center w-full">
-      <div className="flex h-[100dvh] sm:h-[600px] w-full max-w-3xl overflow-hidden p-0 pt-4 sm:p-6 border-0 sm:border rounded-none sm:rounded-lg shadow-none sm:shadow-sm">
+    <div className="flex min-h-screen w-full">
+      <div className="flex my-auto sm:h-[600px] h-[100dvh] w-full max-w-3xl overflow-hidden p-0 pt-4 sm:p-6 border-0 sm:border rounded-none sm:rounded-lg shadow-none sm:shadow-sm relative mx-auto">
         <Chat
-          className="grow overflow-hidden px-2 sm:px-0"
+          className="flex flex-col w-full"
           messages={filteredMessages}
           handleSubmit={handleSubmit}
           input={input}
