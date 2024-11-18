@@ -74,6 +74,15 @@ export default {
   		},
   		animation: {
   			'typing-dot-bounce': 'typing-dot-bounce 1.25s ease-out infinite'
+  		},
+  		spacing: {
+  			'safe': 'env(safe-area-inset-bottom)'
+  		},
+  		padding: {
+  			'safe': 'env(safe-area-inset-bottom)'
+  		},
+  		margin: {
+  			'safe': 'env(safe-area-inset-bottom)'
   		}
   	}
   },
