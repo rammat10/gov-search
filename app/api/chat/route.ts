@@ -1,56 +1,11 @@
-import { openai } from "@ai-sdk/openai";
-import { streamText } from "ai";
-import { rateLimit } from "@/lib/rate-limiter";
-import { headers } from "next/headers";
+import { streamText, tool, convertToCoreMessages } from 'ai'
+import { z } from 'zod';
+import { headers } from 'next/headers';
+import { openai } from '@ai-sdk/openai';
+import { rateLimit } from '@/lib/rate-limiter';
 
-const model = openai("gpt-4o-mini");
+const OPENAI_API_MODEL = process.env.OPENAI_API_MODEL || 'gpt-4o-mini';
 
-// Define the functions that OpenAI can call
-const functions = [
-	{
-		name: "search_bills",
-		description: "Search for recent bills and legislation in Congress",
-		parameters: {
-			type: "object",
-			properties: {
-				query: {
-					type: "string",
-					description: "The search topic (e.g., 'climate change', 'healthcare reform')"
-				},
-				dateIssuedStartDate: {
-					type: "string",
-					description: "Start date in YYYY-MM-DD format. Defaults to 1 year ago"
-				},
-				dateIssuedEndDate: {
-					type: "string",
-					description: "End date in YYYY-MM-DD format. Defaults to today"
-				},
-				pageSize: {
-					type: "number",
-					description: "Number of results to return (max 100)",
-					default: 10
-				}
-			},
-			required: ["query"]
-		}
-	},
-	{
-		name: "get_package_summary",
-		description: "Get detailed information about a specific government document package",
-		parameters: {
-			type: "object",
-			properties: {
-				packageId: {
-					type: "string",
-					description: "The GovInfo package ID"
-				}
-			},
-			required: ["packageId"]
-		}
-	}
-];
-
-// Function implementations
 interface SearchBillsParams {
 	query: string;
 	dateIssuedStartDate?: string;
@@ -63,6 +18,7 @@ interface PackageSummaryParams {
 }
 
 async function searchBills(params: SearchBillsParams) {
+	console.log('searchBills', params);
 	// Calculate default dates if not provided
 	const today = new Date();
 	const oneYearAgo = new Date();
@@ -105,20 +61,54 @@ async function searchBills(params: SearchBillsParams) {
 	}
 
 	const data = await response.json();
-	
-	// Format the results to be more readable
-	return {
-		count: data.count,
-		bills: data.packages.map((pkg: any) => ({
-			title: pkg.title,
-			congress: pkg.congress,
-			dateIssued: pkg.dateIssued,
-			packageId: pkg.packageId,
-			billNumber: pkg.billNumber,
-			billType: pkg.billType,
-			url: `https://www.govinfo.gov/app/details/${pkg.packageId}`
-		}))
-	};
+	console.log('searchBills raw response data:', data);
+
+	// Handle case where no results are found
+	if (!data.count || !data.results) {
+		return {
+			count: 0,
+			bills: []
+		};
+	}
+
+	try {
+		return {
+			count: data.count,
+			bills: data.results.map((bill: any) => {
+				// Example packageId: BILLS-118hr10150ih
+				const parts = bill.packageId.split('-');
+				const congressPart = parts[1]; // 118hr10150ih
+				
+				// Extract congress number (118)
+				const congress = congressPart.match(/^\d+/)?.[0] || 'Unknown';
+				
+				// Extract bill type (hr, s, hres, etc.)
+				const billType = congressPart.match(/[a-z]+(?=\d)/i)?.[0] || '';
+				
+				// Extract bill number (10150)
+				const billNumber = congressPart.match(/\d+(?=[a-z]*$)/)?.[0] || '';
+				
+				// Extract version (ih, rfs, etc.)
+				const version = congressPart.match(/[a-z]+$/)?.[0] || '';
+
+				return {
+					title: bill.title || 'Untitled',
+					congress: congress,
+					dateIssued: bill.dateIssued || 'Date unknown',
+					packageId: bill.packageId || '',
+					billNumber: billNumber,
+					billType: billType,
+					version: version,
+					url: `https://www.govinfo.gov/app/details/${bill.packageId}`,
+					summary: bill.resultLink || ''
+				};
+			})
+		};
+	} catch (error) {
+		console.error('Error processing search results:', error);
+		console.error('Raw data:', data);
+		throw new Error('Failed to process search results');
+	}
 }
 
 async function getPackageSummary(params: PackageSummaryParams) {
@@ -139,21 +129,49 @@ async function getPackageSummary(params: PackageSummaryParams) {
 	return await response.json();
 }
 
+const searchBillsSchema = z.object({
+	query: z.string().describe("The search topic (e.g., 'climate change', 'healthcare reform')"),
+	dateIssuedStartDate: z.string().optional().describe("Start date in YYYY-MM-DD format. Defaults to 1 year ago"),
+	dateIssuedEndDate: z.string().optional().describe("End date in YYYY-MM-DD format. Defaults to today"),
+	pageSize: z.number().optional().default(10).describe("Number of results to return (max 100)")
+});
+
+const tools = {
+	search_bills: tool({
+		description: 'Search for U.S. government bills and legislation',
+		parameters: searchBillsSchema,
+		execute: async (args) => {
+			console.log('search_bills', args);
+			const results = await searchBills(args);
+			console.log('search_bills results', results);
+			return results;
+		}
+	}),
+	get_package_summary: tool({
+		description: 'Get a summary of a U.S. government bill or legislation',
+		parameters: z.object({
+			packageId: z.string().describe("The GovInfo package ID")
+		}),
+		execute: async (args) => {
+			const summary = await getPackageSummary(args);
+			return summary;
+		}
+	})
+};
+
 export async function POST(req: Request) {
 	try {
-		// Get IP address from headers - now properly awaited
+		// Get IP address for rate limiting
 		const headersList = await headers();
-		const forwardedFor = headersList.get('x-forwarded-for');
-		const ip = forwardedFor ? forwardedFor.split(',')[0] : 'unknown';
-		
-		// Check rate limit
+		const ip = headersList.get('x-forwarded-for') ?? 'anonymous';
+
+		// Rate limit by IP
 		const rateLimitResult = await rateLimit(ip);
-		
+
 		if (!rateLimitResult.success) {
 			return new Response(
 				JSON.stringify({
-					error: 'Rate limit exceeded',
-					reset: rateLimitResult.reset,
+					error: 'Too many requests',
 					limit: rateLimitResult.limit,
 					remaining: rateLimitResult.remaining,
 				}),
@@ -170,55 +188,44 @@ export async function POST(req: Request) {
 		}
 
 		const { messages } = await req.json();
-		const userMessage = messages[messages.length - 1].content;
+		console.log('Received messages:', messages);  // Log incoming messages
+		
+		const model = openai(OPENAI_API_MODEL);
+		console.log('Using model:', OPENAI_API_MODEL);  // Log which model we're using
 
-		const result = streamText({
+		const result = await streamText({
+			experimental_toolCallStreaming: true,
 			model,
-			messages: [
-				{
-					role: "system",
-					content: "You are a helpful assistant that searches for U.S. government bills and legislation. " +
-						"When users ask about bills or legislation, ALWAYS use the search_bills function to find relevant information. " +
-						"When users specify a time period, use the dateIssuedStartDate and dateIssuedEndDate parameters. " +
-						"Format the results in a clear, readable way."
-				},
-				...messages
-			],
-			functions,
-			function_call: {
-				name: "search_bills",
-				arguments: JSON.stringify({
-					query: userMessage,
-					pageSize: 5
-				})
-			},
-			async onFunctionCall({ name, arguments: args }: { name: string; arguments: any }) {
-				if (name === 'search_bills') {
-					const searchResults = await searchBills(args as SearchBillsParams);
-					return `Here are the most recent bills I found:\n\n${
-						searchResults.bills.map((bill: {
-							title: string;
-							congress: string;
-							dateIssued: string;
-							url: string;
-						}) => 
-							`- ${bill.title}\n  Congress: ${bill.congress}\n  Date: ${bill.dateIssued}\n  Link: ${bill.url}\n`
-						).join('\n')
-					}`;
-				}
-				else if (name === 'get_package_summary') {
-					const packageSummary = await getPackageSummary(args as PackageSummaryParams);
-					return `Here is the package information: ${JSON.stringify(packageSummary, null, 2)}`;
-				}
-				throw new Error(`Unknown function: ${name}`);
-			}
+	      system: `\
+        - you are a friendly government bills and legislation assistant
+        - your responses are concise and conversational
+        - when users ask about bills, immediately use the search_bills function
+        - present results in a natural, flowing way
+        - always mention the total number of results found
+        - for each bill, include: title, bill number, congress, date, and URL
+        - briefly explain what the bills represent
+        - ask if they'd like more details about any specific bill
+      `,
+      messages: convertToCoreMessages(messages),
+			tools,
+			maxSteps: 5,
+			temperature: 0.7,
 		});
 
 		return result.toDataStreamResponse();
+
 	} catch (error) {
+		console.error('Detailed error:', {
+			name: error.name,
+			message: error.message,
+			stack: error.stack,
+		});
 		console.error('Error:', error);
 		return new Response(
-			JSON.stringify({ error: 'Failed to fetch government data' }), 
+			JSON.stringify({ 
+				error: 'Failed to fetch government data',
+				details: error instanceof Error ? error.message : 'Unknown error'
+			}), 
 			{
 				status: 500,
 				headers: { 'Content-Type': 'application/json' }
