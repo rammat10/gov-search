@@ -20,8 +20,8 @@ export default function ChatDemo() {
   const filteredMessages = messages.filter((message) => message.content !== '');
  
   return (
-    <div className="flex min-h-screen items-center justify-center w-full p-4">
-      <div className="flex h-[600px] w-full max-w-3xl border rounded-lg shadow-sm p-4">
+    <div className="flex min-h-screen items-center justify-center w-full">
+      <div className="flex h-[600px] w-full max-w-3xl border rounded-lg shadow-sm p-6">
         <Chat
           className="grow"
           messages={filteredMessages}
