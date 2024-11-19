@@ -20,7 +20,7 @@ export default function ChatDemo() {
 
   return (
     <div className="flex min-h-screen w-full">
-      <div className="flex  sm:my-auto h-[100dvh] sm:h-[600px] w-full max-w-3xl overflow-hidden rounded-none sm:rounded-lg shadow-none sm:shadow-sm relative mx-auto">
+      <div className="flex  sm:my-auto h-[100dvh] sm:h-[600px] w-full max-w-3xl overflow-hidden rounded-none sm:rounded-lg shadow-none relative mx-auto">
         <Chat
           className="flex flex-col w-full"
           messages={filteredMessages}
