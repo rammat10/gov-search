@@ -1,36 +1,166 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Legislative Search AI Assistant
+
+An AI-powered chat interface for searching and understanding U.S. government bills and legislation, built with Next.js, OpenAI, and the GovInfo API.
+
+## Overview
+
+This application helps users discover and understand U.S. government bills and legislation through a natural language interface. Users can ask questions about bills in plain English, and the AI will search, summarize, and explain the relevant legislation.
+
+## Features
+
+- 🤖 **Natural Language Interface**: Ask about bills in plain English
+- 🔍 **Smart Bill Search**: Instantly finds relevant legislation
+- 💬 **Streaming Responses**: Real-time AI responses with typing indicators
+- 📋 **Interactive UI**: Copy responses, rate answers, stop generation mid-stream
+- ⚡ **Smart Suggestions**: Contextual prompts to help users get started
+- 📱 **Responsive Design**: Works seamlessly on desktop and mobile
+- 🔒 **Rate Limiting**: Protects API from abuse while ensuring fair usage
+
+## Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) with React 19
+- **AI**: [OpenAI GPT-4](https://openai.com/) via AI SDK
+- **Database**: [Upstash Redis](https://upstash.com/) for rate limiting
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) with CSS Variables
+- **Animation**: [Framer Motion](https://www.framer.com/motion/)
+- **Government Data**: [GovInfo API](https://api.govinfo.gov/)
+- **Type Safety**: TypeScript
+- **Markdown**: React Markdown with GFM Support
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- OpenAI API key
+- GovInfo API key
+- Upstash Redis credentials
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/legislative-search-ai.git
+cd legislative-search-ai
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up environment variables:
+
+```env
+# Create a .env.local file with:
+OPENAI_API_KEY=your_openai_api_key
+GOV_INFO_API_KEY=your_govinfo_api_key
+OPENAI_API_MODEL=gpt-4-turbo
+UPSTASH_REDIS_REST_URL=your_redis_url
+UPSTASH_REDIS_REST_TOKEN=your_redis_token
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Start a Search**: Type a question about legislation or use a suggested prompt
+2. **View Results**: Get real-time responses with bill summaries and links
+3. **Interact**: Copy text, rate responses, or ask follow-up questions
+4. **Explore**: Click links to view official bill documentation
 
-## Learn More
+## API Rate Limiting
 
-To learn more about Next.js, take a look at the following resources:
+The application implements rate limiting to ensure fair usage:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 10 requests per 10 seconds per IP address
+- Graceful fallback if rate limiting service is unavailable
+- Clear feedback when limits are reached
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Architecture
 
-## Deploy on Vercel
+### Core Components
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Chat Interface** (`components/ui/chat.tsx`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   - Message display and interaction management
+   - Auto-scrolling and animations
+   - Response rating system
+
+2. **Message Input** (`components/ui/message-input.tsx`)
+
+   - User input handling
+   - Auto-resizing textarea
+   - Generation control
+
+3. **API Integration** (`app/api/chat/route.ts`)
+   - OpenAI streaming
+   - Rate limiting
+   - Error handling
+
+### Key Features
+
+1. **Bill Search**
+
+   - Natural language query processing
+   - Real-time legislation search
+   - Structured response formatting
+
+2. **Response Management**
+
+   - Streaming responses
+   - Markdown rendering
+   - Copy functionality
+
+3. **User Experience**
+   - Suggested prompts
+   - Mobile responsiveness
+   - Smooth animations
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Development
+
+```bash
+# Run development server
+npm run dev
+
+# Run type checking
+npm run type-check
+
+# Run linting
+npm run lint
+
+# Run build
+npm run build
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [Next.js](https://nextjs.org/)
+- AI powered by [OpenAI](https://openai.com/)
+- Government data from [GovInfo](https://www.govinfo.gov/)
+- Rate limiting by [Upstash](https://upstash.com/)
+
+## Support
+
+For support, please open an issue in the GitHub repository.
