@@ -119,15 +119,6 @@ export function Chat({
       </div>
 
       {/* Input section - fixed at bottom */}
-      {/* <div className="p-4 sm:p-6">
-        <MessageInput
-          value={input}
-          onChange={handleInputChange}
-          onSubmit={handleSubmit}
-          isGenerating={isGenerating}
-          stop={stop}
-        />
-      </div> */}
       <ChatForm
         className="mt-auto"
         isPending={isGenerating || isTyping}
