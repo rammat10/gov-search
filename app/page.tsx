@@ -1,8 +1,8 @@
 "use client"
 
-import { useChat } from "ai/react"
-
 import { Chat } from "@/components/ui/chat"
+import { getRandomSuggestions } from "@/lib/suggestions"
+import { useChat } from "ai/react"
 
 export default function ChatDemo() {
   const {
@@ -15,12 +15,11 @@ export default function ChatDemo() {
     isLoading,
   } = useChat()
 
-  // filter out messages that have no content
   const filteredMessages = messages.filter((message) => message.content !== "")
 
   return (
     <div className="flex min-h-screen w-full">
-      <div className="flex  sm:my-auto h-[100dvh] sm:h-[600px] w-full max-w-3xl overflow-hidden rounded-none sm:rounded-lg shadow-none relative mx-auto">
+      <div className="flex sm:my-auto h-[100dvh] sm:h-[600px] w-full max-w-3xl overflow-hidden rounded-none sm:rounded-lg shadow-none relative mx-auto">
         <Chat
           className="flex flex-col w-full"
           messages={filteredMessages}
@@ -30,11 +29,7 @@ export default function ChatDemo() {
           isGenerating={isLoading}
           stop={stop}
           append={append}
-          suggestions={[
-            "What recent bills have been introduced about climate change?",
-            "Show me legislation related to healthcare reform from the past year.",
-            "What bills are currently being discussed about cybersecurity?",
-          ]}
+          suggestions={getRandomSuggestions(3)}
         />
       </div>
     </div>
