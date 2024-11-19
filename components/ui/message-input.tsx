@@ -15,6 +15,7 @@ interface MessageInputBaseProps
   submitOnEnter?: boolean
   stop?: () => void
   isGenerating: boolean
+  onSubmit?: (event?: { preventDefault?: () => void }) => void
 }
 
 interface MessageInputWithoutAttachmentProps extends MessageInputBaseProps {
@@ -38,6 +39,7 @@ export function MessageInput({
   submitOnEnter = true,
   stop,
   isGenerating,
+  onSubmit,
   ...props
 }: MessageInputProps) {
   const [isDragging, setIsDragging] = useState(false)
@@ -114,13 +116,15 @@ export function MessageInput({
     dependencies: [props.value, showFileList],
   })
 
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (onSubmit && props.value !== "") {
+      onSubmit(event)
+    }
+  }
+
   return (
-    <div
-      className="relative flex w-full"
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
-    >
+    <form onSubmit={handleSubmit} className="relative flex w-full">
       <textarea
         aria-label="Write your prompt here"
         placeholder={placeholder}
@@ -130,7 +134,7 @@ export function MessageInput({
         className={cn(
           "w-full grow resize-none rounded-xl border border-input bg-background p-3 pr-24 text-sm ring-offset-background transition-[border] placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           showFileList && "pb-16",
-          className
+          className,
         )}
         {...(props.allowAttachments
           ? omit(props, ["allowAttachments", "files", "setFiles"])
@@ -151,7 +155,7 @@ export function MessageInput({
                         if (!files) return null
 
                         const filtered = Array.from(files).filter(
-                          (f) => f !== file
+                          (f) => f !== file,
                         )
                         if (filtered.length === 0) return null
                         return filtered
@@ -205,7 +209,7 @@ export function MessageInput({
       </div>
 
       {props.allowAttachments && <FileUploadOverlay isDragging={isDragging} />}
-    </div>
+    </form>
   )
 }
 MessageInput.displayName = "MessageInput"
@@ -246,7 +250,7 @@ const FilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
     }
 
     return <GenericFilePreview {...props} ref={ref} />
-  }
+  },
 )
 FilePreview.displayName = "FilePreview"
 
@@ -282,7 +286,7 @@ const ImageFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
         </button>
       </motion.div>
     )
-  }
+  },
 )
 ImageFilePreview.displayName = "ImageFilePreview"
 
@@ -315,7 +319,7 @@ const GenericFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
         </button>
       </motion.div>
     )
-  }
+  },
 )
 GenericFilePreview.displayName = "GenericFilePreview"
 
