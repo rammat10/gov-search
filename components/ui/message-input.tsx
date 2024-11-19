@@ -15,7 +15,6 @@ interface MessageInputBaseProps
   submitOnEnter?: boolean
   stop?: () => void
   isGenerating: boolean
-  onSubmit?: (event?: { preventDefault?: () => void }) => void
 }
 
 interface MessageInputWithoutAttachmentProps extends MessageInputBaseProps {
@@ -39,7 +38,6 @@ export function MessageInput({
   submitOnEnter = true,
   stop,
   isGenerating,
-  onSubmit,
   ...props
 }: MessageInputProps) {
   const [isDragging, setIsDragging] = useState(false)
@@ -91,7 +89,7 @@ export function MessageInput({
       .filter((file) => file !== null)
 
     if (props.allowAttachments && files.length > 0) {
-      addFiles(files as File[])
+      addFiles(files)
     }
   }
 
@@ -116,15 +114,13 @@ export function MessageInput({
     dependencies: [props.value, showFileList],
   })
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
-    if (onSubmit && props.value !== "") {
-      onSubmit(event)
-    }
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="relative flex w-full">
+    <div
+      className="relative flex w-full"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       <textarea
         aria-label="Write your prompt here"
         placeholder={placeholder}
@@ -209,7 +205,7 @@ export function MessageInput({
       </div>
 
       {props.allowAttachments && <FileUploadOverlay isDragging={isDragging} />}
-    </form>
+    </div>
   )
 }
 MessageInput.displayName = "MessageInput"

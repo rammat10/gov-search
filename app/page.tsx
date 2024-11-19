@@ -1,10 +1,9 @@
 "use client"
- 
+
 import { useChat } from "ai/react"
- 
+
 import { Chat } from "@/components/ui/chat"
 
- 
 export default function ChatDemo() {
   const {
     messages,
@@ -15,13 +14,13 @@ export default function ChatDemo() {
     stop,
     isLoading,
   } = useChat()
- 
+
   // filter out messages that have no content
-  const filteredMessages = messages.filter((message) => message.content !== '');
- 
+  const filteredMessages = messages.filter((message) => message.content !== "")
+
   return (
     <div className="flex min-h-screen w-full">
-      <div className="flex  sm:my-auto h-[100dvh] sm:h-[600px] w-full max-w-3xl overflow-hidden border-0 sm:border rounded-none sm:rounded-lg shadow-none sm:shadow-sm relative mx-auto">
+      <div className="flex  sm:my-auto h-[100dvh] sm:h-[600px] w-full max-w-3xl overflow-hidden rounded-none sm:rounded-lg shadow-none sm:shadow-sm relative mx-auto">
         <Chat
           className="flex flex-col w-full"
           messages={filteredMessages}

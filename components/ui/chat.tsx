@@ -1,16 +1,16 @@
 "use client"
 
-import { forwardRef, useState, type ReactElement } from "react"
 import { ArrowDown, ThumbsDown, ThumbsUp } from "lucide-react"
+import { type ReactElement, forwardRef, useState } from "react"
 
-import { cn } from "@/lib/utils"
-import { useAutoScroll } from "@/hooks/use-auto-scroll"
 import { Button } from "@/components/ui/button"
 import { type Message } from "@/components/ui/chat-message"
 import { CopyButton } from "@/components/ui/copy-button"
 import { MessageInput } from "@/components/ui/message-input"
 import { MessageList } from "@/components/ui/message-list"
 import { PromptSuggestions } from "@/components/ui/prompt-suggestions"
+import { useAutoScroll } from "@/hooks/use-auto-scroll"
+import { cn } from "@/lib/utils"
 
 interface ChatPropsBase {
   handleSubmit: (
@@ -57,67 +57,69 @@ export function Chat({
   const isEmpty = messages.length === 0
   const isTyping = lastMessage?.role === "user"
 
+  const { containerRef, handleScroll } = useAutoScroll([messages])
+
   return (
-    <div className={cn("flex flex-col h-full", className)}>
+    <ChatContainer className={cn("flex flex-col h-full", className)}>
       {/* Messages section - scrollable */}
-      <div className="flex-1 overflow-y-auto pt-4 sm:pt-6">
-        {isEmpty && append && suggestions ? (
-          <div className="px-4 sm:px-6">
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6"
+      >
+        <div className="space-y-6">
+          {isEmpty && append && suggestions ? (
             <PromptSuggestions
               label="Try these prompts ✨"
               append={append}
               suggestions={suggestions}
             />
-          </div>
-        ) : null}
+          ) : null}
 
-        {messages.length > 0 ? (
-          <div className="px-4 sm:px-6">
-            <ChatMessages messages={messages}>
-              <MessageList
-                messages={messages}
-                isTyping={isTyping}
-                messageOptions={(message) => ({
-                  actions: onRateResponse ? (
-                    <>
-                      <div className="border-r pr-1">
-                        <CopyButton
-                          content={message.content}
-                          copyMessage="Copied response to clipboard!"
-                        />
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6"
-                        onClick={() => onRateResponse(message.id, "thumbs-up")}
-                      >
-                        <ThumbsUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6"
-                        onClick={() => onRateResponse(message.id, "thumbs-down")}
-                      >
-                        <ThumbsDown className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <CopyButton
-                      content={message.content}
-                      copyMessage="Copied response to clipboard!"
-                    />
-                  ),
-                })}
-              />
-            </ChatMessages>
-          </div>
-        ) : null}
+          {messages.length > 0 && (
+            <MessageList
+              messages={messages}
+              isTyping={isTyping}
+              messageOptions={(message) => ({
+                actions: onRateResponse ? (
+                  <>
+                    <div className="border-r pr-1">
+                      <CopyButton
+                        content={message.content}
+                        copyMessage="Copied response to clipboard!"
+                      />
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => onRateResponse(message.id, "thumbs-up")}
+                    >
+                      <ThumbsUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => onRateResponse(message.id, "thumbs-down")}
+                    >
+                      <ThumbsDown className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <CopyButton
+                    content={message.content}
+                    copyMessage="Copied response to clipboard!"
+                  />
+                ),
+              })}
+            />
+          )}
+        </div>
       </div>
 
       {/* Input section - fixed at bottom */}
-      <div className="border-t bg-background p-4 sm:p-6">
+      {/* <div className="p-4 sm:p-6">
         <MessageInput
           value={input}
           onChange={handleInputChange}
@@ -125,8 +127,27 @@ export function Chat({
           isGenerating={isGenerating}
           stop={stop}
         />
-      </div>
-    </div>
+      </div> */}
+      <ChatForm
+        className="mt-auto"
+        isPending={isGenerating || isTyping}
+        handleSubmit={handleSubmit}
+      >
+        {({ files, setFiles }) => (
+          <div className="p-4 sm:p-6">
+            <MessageInput
+              value={input}
+              onChange={handleInputChange}
+              allowAttachments
+              files={files}
+              setFiles={setFiles}
+              stop={stop}
+              isGenerating={isGenerating}
+            />
+          </div>
+        )}
+      </ChatForm>
+    </ChatContainer>
   )
 }
 Chat.displayName = "Chat"
@@ -142,7 +163,7 @@ export function ChatMessages({
 
   return (
     <div
-      className="relative flex-1 overflow-y-auto pb-4 mb-safe"
+      className="relative overflow-y-auto pb-4"
       ref={containerRef}
       onScroll={handleScroll}
     >
