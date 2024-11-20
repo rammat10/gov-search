@@ -32,6 +32,6 @@ export const suggestions = [
 	"Find active legislation about infrastructure improvements"
 ] as const;
 
-export function getRandomSuggestions(count: number = 3): string[] {
-	return [...suggestions].sort(() => 0.5 - Math.random()).slice(0, count);
-}
+// export function getRandomSuggestions(count: number = 3): string[] {
+// 	return [...suggestions].sort(() => 0.5 - Math.random()).slice(0, count);
+// }

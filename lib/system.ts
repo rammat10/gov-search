@@ -8,6 +8,5 @@ export const systemPrompt = `\
         - when users ask follow-up questions about specific bills:
           - use get_bill_details for more information about a bill
           - use get_bill_summary to get the bill's summary
-          - use get_related_bills to find connected legislation
         - ask if they'd like more details about any specific bill
       `;

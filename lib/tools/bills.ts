@@ -2,10 +2,10 @@ import { tool } from "ai"
 import { searchBillsSchema, billDetailsSchema } from "../schemas/bills"
 import {
   searchBills,
-  getPackageSummary,
   getBillDetails,
+  getPackageSummary,
 } from "../services/govinfo"
-import { SearchBillsParams, PackageSummaryParams } from "../types/bills"
+import { PackageSummaryParams, SearchBillsParams } from "../types/bills"
 
 export const tools = {
   search_bills: tool({
@@ -19,7 +19,6 @@ export const tools = {
       return results
     },
   }),
-
   get_bill_summary: tool({
     description: "Get the summary of a specific bill using its package ID.",
     parameters: billDetailsSchema,
@@ -30,7 +29,6 @@ export const tools = {
       return summary
     },
   }),
-
   get_bill_details: tool({
     description:
       "Get detailed information about a specific bill using its package ID.",
@@ -43,3 +41,5 @@ export const tools = {
     },
   }),
 }
+
+

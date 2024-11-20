@@ -55,50 +55,38 @@ export async function searchBills(params: SearchBillsParams) {
 }
 
 export async function getPackageSummary(params: PackageSummaryParams) {
-	const controller = new AbortController();
-	const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    console.log('Fetching package summary for:', params.packageId);
+    
+    const response = await fetch(
+      `https://api.govinfo.gov/packages/${params.packageId}/summary`,
+      {
+        headers: {
+          Accept: 'application/json',
+          'X-Api-Key': process.env.GOV_INFO_API_KEY || '',
+        }
+      }
+    );
 
-	try {
-		console.log('Fetching package summary for:', params.packageId);
-		
-		const response = await fetch(
-			`https://api.govinfo.gov/packages/${params.packageId}/summary`,
-			{
-				headers: {
-					Accept: 'application/json',
-					'X-Api-Key': process.env.GOV_INFO_API_KEY || '',
-				},
-				signal: controller.signal
-			}
-		);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return { summary: 'No summary available' };
+      }
+      throw new Error(`Failed to fetch package summary: ${response.status} ${response.statusText}`);
+    }
 
-		clearTimeout(timeout);
+    const data = await response.json();
 
-		if (!response.ok) {
-			if (response.status === 404) {
-				return { summary: 'No summary available' };
-			}
-			throw new Error(`Failed to fetch package summary: ${response.status} ${response.statusText}`);
-		}
+    // Return just the summary to avoid redundancy with getBillDetails
+    return {
+      summary: data.summary || data.title || 'No summary available'
+    };
 
-		const data = await response.json();
-
-		// Return just the summary to avoid redundancy with getBillDetails
-		return {
-			summary: data.summary || data.title || 'No summary available'
-		};
-
-	} catch (error) {
-		if (error instanceof Error) {
-			if (error.name === 'AbortError') {
-				throw new Error(`Request timed out while fetching summary for ${params.packageId}`);
-			}
-			console.error('Error in getPackageSummary:', error.message);
-		}
-		throw error;
-	} finally {
-		clearTimeout(timeout);
-	}
+  } catch (error) {
+    const err = error as Error; // Type assertion
+    console.error('Error in getPackageSummary:', err.message);
+    throw err;
+  }
 }
 
 
@@ -119,9 +107,6 @@ export async function getCollections() {
 
 
 export async function getBillDetails(packageId: string) {
-	const controller = new AbortController();
-	const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-
 	try {
 		console.log('Fetching bill details for:', packageId);
 
@@ -131,8 +116,7 @@ export async function getBillDetails(packageId: string) {
 				headers: {
 					Accept: 'application/json',
 					'X-Api-Key': process.env.GOV_INFO_API_KEY || '',
-				},
-				signal: controller.signal
+				}
 			}
 		);
 
@@ -177,7 +161,5 @@ export async function getBillDetails(packageId: string) {
 	} catch (error) {
 		console.error('Error in getBillDetails:', error);
 		throw error;
-	} finally {
-		clearTimeout(timeout);
 	}
 }
