@@ -1,9 +1,9 @@
 "use client";
 
 import { Chat } from "@/components/ui/chat";
-// import { getRandomSuggestions } from "@/lib/suggestions"
+import { getRandomSuggestions } from "@/lib/suggestions";
 import { useChat } from "ai/react";
-// import { useCallback, useMemo } from "react"
+import { useMemo } from "react";
 import { toast } from "sonner";
 
 export default function ChatDemo() {
@@ -35,7 +35,7 @@ export default function ChatDemo() {
     },
   });
 
-  // const memoizedSuggestions = useMemo(() => getRandomSuggestions(3), [])
+  const memoizedSuggestions = useMemo(() => getRandomSuggestions(3), []);
 
   const filteredMessages = messages.filter((message) => message.content !== "");
   return (
@@ -50,12 +50,7 @@ export default function ChatDemo() {
           isGenerating={isLoading}
           stop={stop}
           append={append}
-          // suggestions={memoizedSuggestions}
-          suggestions={[
-            "Show me ongoing legislation about banking reform",
-            "What current bills address social media regulation?",
-            "Find active legislation about infrastructure improvements",
-          ]}
+          suggestions={memoizedSuggestions}
         />
       </div>
     </div>
