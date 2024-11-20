@@ -86,7 +86,7 @@ export function MessageInput({
 
     const files = Array.from(items)
       .map((item) => item.getAsFile())
-      .filter((file) => file !== null)
+      .filter((file): file is File => file !== null)
 
     if (props.allowAttachments && files.length > 0) {
       addFiles(files)
@@ -130,7 +130,7 @@ export function MessageInput({
         className={cn(
           "w-full grow resize-none rounded-xl border border-input bg-background p-3 pr-24 text-sm ring-offset-background transition-[border] placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           showFileList && "pb-16",
-          className,
+          className
         )}
         {...(props.allowAttachments
           ? omit(props, ["allowAttachments", "files", "setFiles"])
@@ -151,7 +151,7 @@ export function MessageInput({
                         if (!files) return null
 
                         const filtered = Array.from(files).filter(
-                          (f) => f !== file,
+                          (f) => f !== file
                         )
                         if (filtered.length === 0) return null
                         return filtered
@@ -246,7 +246,7 @@ const FilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
     }
 
     return <GenericFilePreview {...props} ref={ref} />
-  },
+  }
 )
 FilePreview.displayName = "FilePreview"
 
@@ -282,7 +282,7 @@ const ImageFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
         </button>
       </motion.div>
     )
-  },
+  }
 )
 ImageFilePreview.displayName = "ImageFilePreview"
 
@@ -315,7 +315,7 @@ const GenericFilePreview = React.forwardRef<HTMLDivElement, FilePreviewProps>(
         </button>
       </motion.div>
     )
-  },
+  }
 )
 GenericFilePreview.displayName = "GenericFilePreview"
 

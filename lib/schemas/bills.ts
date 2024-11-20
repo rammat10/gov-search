@@ -1,13 +1,17 @@
 import { z } from "zod"
 
 export const searchBillsSchema = z.object({
-  query: z.string().optional()
-    .describe("Text to search for in bills"),
-  dateIssuedStartDate: z.string().optional()
-    .describe("Start date for bill search (YYYY-MM-DD format)"),
-  dateIssuedEndDate: z.string().optional()
-    .describe("End date for bill search (YYYY-MM-DD format)"),
-  pageSize: z.number().optional()
+  query: z.string()
+    .describe("Text to search for in bills (required)"),
+  dateIssuedStartDate: z.string()
+    .optional()
+    .describe("Start date in YYYY-MM-DD format. Must be 2014-01-01 or later. Defaults to 2014-01-01."),
+  dateIssuedEndDate: z.string()
+    .optional()
+    .describe("End date in YYYY-MM-DD format. Defaults to today."),
+  pageSize: z.number()
+    .optional()
+    .default(10)
     .describe("Number of results to return (default: 10)")
 })
 

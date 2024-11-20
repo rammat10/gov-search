@@ -1,69 +1,49 @@
 import { PackageSummaryParams, SearchBillsParams, PublishedParams, LastModifiedParams } from "../types/bills";
+import { search } from '@/lib/search';
 
 export async function searchBills(params: SearchBillsParams) {
-	console.log("searchBills", params);
+    console.log("searchBills", params);
 
-	const response = await fetch("https://api.govinfo.gov/search", {
-		method: "POST",
-		headers: {
-			Accept: "application/json",
-			"Content-Type": "application/json",
-			"X-Api-Key": process.env.GOV_INFO_API_KEY || "",
-		},
-		body: JSON.stringify({
-			query: `collection:BILLS AND (${params.query})`,
-			pageSize: params.pageSize || 10,
-			offsetMark: "*",
-			sorts: [{ field: "dateIssued", sortOrder: "DESC" }],
-			historical: true
-		}),
-	});
+    if (!params.query) {
+        throw new Error("The 'query' parameter is required.");
+    }
 
-	if (!response.ok) {
-		throw new Error(`GovInfo API error: ${response.status} - ${response.statusText}`);
-	}
+    try {
+        // Default dates if not provided
+        const today = new Date();
+        const defaultStartDate = '2014-01-01'; // Data starts from 2014
+        const defaultEndDate = today.toISOString().split('T')[0];
 
-	const data = await response.json();
-	console.log("searchBills raw response data:", data);
+        const startDate = params.dateIssuedStartDate || defaultStartDate;
+        const endDate = params.dateIssuedEndDate || defaultEndDate;
 
-	if (!data.count || !data.results) {
-		return { count: 0, bills: [] };
-	}
+        // Validate date range
+        if (new Date(startDate) < new Date('2014-01-01')) {
+            throw new Error("Data is only available from January 1, 2014 onwards.");
+        }
 
-	try {
-		return {
-			count: data.count,
-			bills: data.results.map((bill: {
-				packageId: string;
-				title?: string;
-				dateIssued?: string;
-				resultLink?: string;
-			}) => {
-				const parts = bill.packageId.split("-");
-				const congressPart = parts[1];
-				const congress = congressPart.match(/^\d+/)?.[0] || "Unknown";
-				const billType = congressPart.match(/[a-z]+(?=\d)/i)?.[0] || "";
-				const billNumber = congressPart.match(/\d+(?=[a-z]*$)/)?.[0] || "";
-				const version = congressPart.match(/[a-z]+$/)?.[0] || "";
-
-				return {
-					title: bill.title || "Untitled",
-					congress,
-					dateIssued: bill.dateIssued || "Date unknown",
-					packageId: bill.packageId || "",
-					billNumber,
-					billType,
-					version,
-					url: `https://www.govinfo.gov/app/details/${bill.packageId}`,
-					summary: bill.resultLink || "",
-				};
-			}),
-		};
-	} catch (error) {
-		console.error("Error processing search results:", error);
-		console.error("Raw data:", data);
-		throw new Error("Failed to process search results");
-	}
+				console.log("Searching for bills with queryxxx:", params.query, "from", startDate, "to", endDate);
+        const results = await search(params.query, startDate, endDate);
+				console.log("searchBills results", results);
+        return {
+            count: results.length,
+            bills: results.map(bill => ({
+                title: bill.title,
+                congress: bill.congress,
+                dateIssued: bill.date_issued,
+                packageId: bill.package_id,
+                billNumber: bill.package_id.split('-')[1].match(/\d+(?=[a-z]*$)/)?.[0] || "",
+                billType: bill.doc_class,
+                version: bill.package_id.split('-')[1].match(/[a-z]+$/)?.[0] || "",
+                url: `https://www.govinfo.gov/app/details/${bill.package_id}`,
+                summary: "",
+                similarity: bill.similarity
+            }))
+        };
+    } catch (error) {
+        console.error("Error in semantic search:", error);
+        throw error;
+    }
 }
 
 export async function getPackageSummary(params: PackageSummaryParams) {

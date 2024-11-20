@@ -3,6 +3,7 @@
 import { Chat } from "@/components/ui/chat"
 import { getRandomSuggestions } from "@/lib/suggestions"
 import { useChat } from "ai/react"
+import { useMemo } from "react"
 
 export default function ChatDemo() {
   const {
@@ -14,6 +15,8 @@ export default function ChatDemo() {
     stop,
     isLoading,
   } = useChat()
+
+  const memoizedSuggestions = useMemo(() => getRandomSuggestions(3), [])
 
   const filteredMessages = messages.filter((message) => message.content !== "")
 
@@ -29,7 +32,7 @@ export default function ChatDemo() {
           isGenerating={isLoading}
           stop={stop}
           append={append}
-          suggestions={getRandomSuggestions(3)}
+          suggestions={memoizedSuggestions}
         />
       </div>
     </div>
