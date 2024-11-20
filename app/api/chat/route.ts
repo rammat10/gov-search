@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 			system: systemPrompt,
 			messages: convertToCoreMessages(messages),
 			tools,
-			maxSteps: 5,
+			maxSteps: 10,
 			temperature: 0.7,
 		});
 
