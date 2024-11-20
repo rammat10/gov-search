@@ -21,12 +21,6 @@ export const billDetailsSchema = z.object({
     .describe("The GovInfo package ID for the bill"),
 })
 
-export const relatedBillsSchema = z.object({
-  packageId: z
-    .string()
-    .describe("The GovInfo package ID to find related bills for"),
-})
-
 export const collectionsSchema = z.object({
   congress: z
     .string()

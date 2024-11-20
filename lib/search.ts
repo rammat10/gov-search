@@ -22,23 +22,37 @@ async function searchBillsWithRetry(
 ): Promise<Bill[]> {
 	const MAX_RETRIES = 3;
 	const INITIAL_DELAY = 1000;
+	const TIMEOUT = 15000; // 15 second timeout
 
 	try {
-		console.log(`📡 Querying Supabase with parameters:`, {
+		console.log(`📡 Querying Supabase (attempt ${retries + 1}/${MAX_RETRIES + 1}):`, {
 			matchThreshold: 0.7,
 			matchCount: 10,
 			startDate,
 			endDate,
-			retryAttempt: retries
 		});
 
-		const { data, error } = await supabase.rpc("match_bills_by_date", {
-			query_embedding: embedding,
-			match_threshold: 0.7,
-			match_count: 10,
-			start_date: startDate,
-			end_date: endDate,
-		});
+		// Create abort controller for timeout
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => {
+			controller.abort();
+			console.log('⏰ Query timed out after', TIMEOUT, 'ms');
+		}, TIMEOUT);
+
+		const { data, error } = await Promise.race([
+			supabase.rpc("match_bills_by_date", {
+				query_embedding: embedding,
+				match_threshold: 0.7,
+				match_count: 10,
+				start_date: startDate,
+				end_date: endDate,
+			}),
+			new Promise<never>((_, reject) =>
+				setTimeout(() => reject(new Error('Query timeout')), TIMEOUT)
+			)
+		]);
+
+		clearTimeout(timeoutId);
 
 		if (error) {
 			console.error("🚨 Database error details:", {
@@ -47,15 +61,13 @@ async function searchBillsWithRetry(
 				hint: error.hint,
 				details: error.details
 			});
+
 			if (error.code === "57014" && retries < MAX_RETRIES) {
+				const delay = INITIAL_DELAY * (retries + 1);
 				console.log(
-					`⚠️ Search timeout, retrying in ${
-						INITIAL_DELAY * (retries + 1)
-					}ms... (${retries + 1}/${MAX_RETRIES})`,
+					`⚠️ Search timeout, retrying in ${delay}ms... (${retries + 1}/${MAX_RETRIES})`,
 				);
-				await new Promise((resolve) =>
-					setTimeout(resolve, INITIAL_DELAY * (retries + 1)),
-				);
+				await new Promise((resolve) => setTimeout(resolve, delay));
 				return searchBillsWithRetry(embedding, startDate, endDate, retries + 1);
 			}
 			throw error;
@@ -65,9 +77,14 @@ async function searchBillsWithRetry(
 			resultsCount: data?.length || 0,
 			sampleDates: data?.slice(0, 3).map((b: Bill) => b.date_issued)
 		});
+
 		return data || [];
 	} catch (error) {
-		console.error("🚨 Search failed:", error);
+		console.error("🚨 Search failed:", {
+			error: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+			retryAttempt: retries,
+		});
 		throw error;
 	}
 }

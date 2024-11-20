@@ -1,5 +1,13 @@
-import { PackageSummaryParams, SearchBillsParams, PublishedParams, LastModifiedParams } from "../types/bills";
+import { PackageSummaryParams, SearchBillsParams} from "../types/bills";
 import { search } from '@/lib/search';
+
+// Add this interface near the top of the file
+interface BillMember {
+    role: string;
+    memberName: string;
+    state: string;
+    party: string;
+}
 
 export async function searchBills(params: SearchBillsParams) {
     console.log("searchBills", params);
@@ -47,22 +55,40 @@ export async function searchBills(params: SearchBillsParams) {
 }
 
 export async function getPackageSummary(params: PackageSummaryParams) {
-	const response = await fetch(
-		`https://api.govinfo.gov/packages/${params.packageId}/summary`,
-		{
-			headers: {
-				Accept: "application/json",
-				"X-Api-Key": process.env.GOV_INFO_API_KEY || "",
-			},
+	try {
+		console.log('Fetching package summary for:', params.packageId);
+		
+		const response = await fetch(
+			`https://api.govinfo.gov/packages/${params.packageId}/summary`,
+			{
+				headers: {
+					Accept: 'application/json',
+					'X-Api-Key': process.env.GOV_INFO_API_KEY || '',
+				},
+			}
+		);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			console.error('Failed to fetch package summary:', {
+				status: response.status,
+				statusText: response.statusText,
+				body: errorText,
+			});
+			throw new Error(`Failed to fetch package summary: ${response.status} ${response.statusText}`);
 		}
-	);
 
-	if (!response.ok) {
-		throw new Error(`GovInfo API error: ${response.status} - ${response.statusText}`);
+		const data = await response.json();
+
+		// Extract summary or process as needed
+		const summary = data?.summary || 'No summary available';
+		return { summary };
+	} catch (error) {
+		console.error('Error in getPackageSummary:', error);
+		throw error;
 	}
-
-	return await response.json();
 }
+
 
 export async function getCollections() {
 	const response = await fetch("https://api.govinfo.gov/collections", {
@@ -79,105 +105,62 @@ export async function getCollections() {
 	return await response.json();
 }
 
-export async function getLastModifiedPackages(params: LastModifiedParams) {
-	const { collection, startDate, endDate } = params;
-	const url = endDate 
-		? `https://api.govinfo.gov/collections/${collection}/${startDate}/${endDate}`
-		: `https://api.govinfo.gov/collections/${collection}/${startDate}`;
-
-	const queryParams = new URLSearchParams();
-	if (params.pageSize) queryParams.append("pageSize", params.pageSize.toString());
-	if (params.congress) queryParams.append("congress", params.congress);
-	if (params.offsetMark) queryParams.append("offsetMark", params.offsetMark);
-
-	const response = await fetch(`${url}?${queryParams.toString()}`, {
-		headers: {
-			Accept: "application/json",
-			"X-Api-Key": process.env.GOV_INFO_API_KEY || "",
-		},
-	});
-
-	if (!response.ok) {
-		throw new Error(`GovInfo API error: ${response.status} - ${response.statusText}`);
-	}
-
-	return await response.json();
-}
-
-export async function getPublishedPackages(params: PublishedParams) {
-	console.log("getPublishedPackages called with params:", params);
-	
-	const { startDate, endDate, collection, pageSize } = params;
-	const url = endDate 
-		? `https://api.govinfo.gov/published/${startDate}/${endDate}`
-		: `https://api.govinfo.gov/published/${startDate}`;
-	
-	console.log("Base URL:", url);
-
-	const queryParams = new URLSearchParams({
-		pageSize: pageSize.toString(),
-		collection: Array.isArray(collection) ? collection.join(',') : collection
-	});
-
-	if (params.congress) queryParams.append("congress", params.congress);
-	if (params.offsetMark) queryParams.append("offsetMark", params.offsetMark);
-	if (params.modifiedSince) queryParams.append("modifiedSince", params.modifiedSince);
-
-	const fullUrl = `${url}?${queryParams.toString()}`;
-	console.log("Full request URL:", fullUrl);
-
-	const response = await fetch(fullUrl, {
-		headers: {
-			Accept: "application/json",
-			"X-Api-Key": process.env.GOV_INFO_API_KEY || "",
-		},
-	});
-
-	console.log("Response status:", response.status, response.statusText);
-	
-	if (!response.ok) {
-		const errorText = await response.text();
-		console.error("Error response body:", errorText);
-		throw new Error(`GovInfo API error: ${response.status} - ${response.statusText}`);
-	}
-
-	const data = await response.json();
-	console.log("Response data:", data);
-	return data;
-}
 
 export async function getBillDetails(packageId: string) {
-	const response = await fetch(
-		`https://api.govinfo.gov/packages/${packageId}/details`,
-		{
-			headers: {
-				Accept: "application/json",
-				"X-Api-Key": process.env.GOV_INFO_API_KEY || "",
-			},
+	try {
+		console.log('Fetching bill details for:', packageId);
+
+		const response = await fetch(
+			`https://api.govinfo.gov/packages/${packageId}/summary`,
+			{
+				headers: {
+					Accept: 'application/json',
+					'X-Api-Key': process.env.GOV_INFO_API_KEY || '',
+				},
+			}
+		);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			console.error('Failed to fetch bill details:', {
+				status: response.status,
+				statusText: response.statusText,
+				body: errorText,
+			});
+			throw new Error(`Failed to fetch bill details: ${response.status} ${response.statusText}`);
 		}
-	);
 
-	if (!response.ok) {
-		throw new Error(`GovInfo API error: ${response.status} - ${response.statusText}`);
-	}
+		const data = await response.json();
 
-	return await response.json();
-}
-
-export async function getRelatedBills(packageId: string) {
-	const response = await fetch(
-		`https://api.govinfo.gov/packages/${packageId}/related`,
-		{
-			headers: {
-				Accept: "application/json",
-				"X-Api-Key": process.env.GOV_INFO_API_KEY || "",
+		// Process and return the data as needed
+		return {
+			title: data.title,
+			congress: data.congress,
+			session: data.session,
+			chamber: data.originChamber,
+			sponsor: data.members?.find((m: BillMember) => m.role === 'SPONSOR')?.memberName,
+			cosponsors: data.members
+				?.filter((m: BillMember) => m.role === 'COSPONSOR')
+				?.map((m: BillMember) => ({
+					name: m.memberName,
+					state: m.state,
+					party: m.party,
+				})),
+			committee: data.committees?.[0]?.committeeName,
+			dateIssued: data.dateIssued,
+			lastModified: data.lastModified,
+			status: {
+				currentChamber: data.currentChamber,
+				version: data.billVersion,
 			},
-		}
-	);
-
-	if (!response.ok) {
-		throw new Error(`GovInfo API error: ${response.status} - ${response.statusText}`);
+			links: {
+				pdf: data.download?.pdfLink,
+				xml: data.download?.xmlLink,
+				details: data.detailsLink,
+			},
+		};
+	} catch (error) {
+		console.error('Error in getBillDetails:', error);
+		throw error;
 	}
-
-	return await response.json();
 }

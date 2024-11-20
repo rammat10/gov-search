@@ -8,15 +8,19 @@ import { systemPrompt } from '@/lib/system';
 const OPENAI_API_MODEL = process.env.OPENAI_API_MODEL || 'gpt-4o-mini';
 
 export async function POST(req: Request) {
+	let cleanup: (() => void) | undefined;
+	
 	try {
 		// Get IP address for rate limiting
 		const headersList = await headers();
 		const ip = headersList.get('x-forwarded-for') ?? 'anonymous';
+		console.log(`📥 Incoming request from IP: ${ip}`);
 
 		// Rate limit by IP
 		const rateLimitResult = await rateLimit(ip);
 
 		if (!rateLimitResult.success) {
+			console.warn(`⚠️ Rate limit exceeded for IP: ${ip}`);
 			return new Response(
 				JSON.stringify({
 					error: 'Too many requests',
@@ -36,7 +40,20 @@ export async function POST(req: Request) {
 		}
 
 		const { messages } = await req.json();
+		console.log('📝 Processing messages:', messages.length);
+
 		const model = openai(OPENAI_API_MODEL);
+
+		// Handle container shutdown
+		cleanup = () => {
+			console.log('🛑 Container shutdown initiated');
+			// Cleanup logic here
+		};
+		
+		process.on('SIGTERM', () => {
+			console.log('📢 SIGTERM received');
+			cleanup?.();
+		});
 
 		const result = streamText({
 			experimental_toolCallStreaming: true,
@@ -48,16 +65,20 @@ export async function POST(req: Request) {
 			temperature: 0.7,
 		});
 
+		console.log('📤 Streaming response initiated');
 		return result.toDataStreamResponse();
 
 	} catch (err: unknown) {
 		const error = err instanceof Error ? err : new Error(String(err));
 		
-		console.error('Error:', error.message);
+		console.error('❌ Error in chat route:', {
+			error: error.message,
+			stack: error.stack,
+		});
 		
 		return new Response(
 			JSON.stringify({ 
-				error: 'Failed to fetch government data',
+				error: 'Failed to process request',
 				details: error.message
 			}), 
 			{
@@ -65,5 +86,8 @@ export async function POST(req: Request) {
 				headers: { 'Content-Type': 'application/json' }
 			}
 		);
+	} finally {
+		cleanup?.();
+		console.log('🏁 Request completed');
 	}
 }

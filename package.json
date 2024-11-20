@@ -6,7 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:summary": "ts-node test/getPackageSummary.test.ts",
+    "test:details": "ts-node test/getBillDetails.test.ts",
+    "test:search": "ts-node test/searchBills.test.ts",
+    "test:all": "npm run test:summary && npm run test:details && npm run test:search",
+    "test:debug": "NODE_ENV=development DEBUG=* npm run test:all",
+    "test:debug:summary": "NODE_ENV=development DEBUG=* npm run test:summary",
+    "test:debug:related": "NODE_ENV=development DEBUG=* npm run test:related",
+    "test:debug:search": "NODE_ENV=development DEBUG=* npm run test:search"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.0.0",
