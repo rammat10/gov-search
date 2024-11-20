@@ -148,3 +148,13 @@ export interface BillDetails {
 	committee?: Committee;
 }
 
+export interface PackageSummaryResponse {
+	summary: string;
+	title?: string;
+	congress?: string;
+	dateIssued?: string;
+	lastModified?: string;
+	currentChamber?: string;
+	billVersion?: string;
+}
+

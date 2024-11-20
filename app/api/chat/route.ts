@@ -8,8 +8,6 @@ import { systemPrompt } from '@/lib/system';
 const OPENAI_API_MODEL = process.env.OPENAI_API_MODEL || 'gpt-4o-mini';
 
 export async function POST(req: Request) {
-	let cleanup: (() => void) | undefined;
-	
 	try {
 		// Get IP address for rate limiting
 		const headersList = await headers();
@@ -44,17 +42,6 @@ export async function POST(req: Request) {
 
 		const model = openai(OPENAI_API_MODEL);
 
-		// Handle container shutdown
-		cleanup = () => {
-			console.log('🛑 Container shutdown initiated');
-			// Cleanup logic here
-		};
-		
-		process.on('SIGTERM', () => {
-			console.log('📢 SIGTERM received');
-			cleanup?.();
-		});
-
 		const result = streamText({
 			experimental_toolCallStreaming: true,
 			model,
@@ -86,8 +73,5 @@ export async function POST(req: Request) {
 				headers: { 'Content-Type': 'application/json' }
 			}
 		);
-	} finally {
-		cleanup?.();
-		console.log('🏁 Request completed');
 	}
 }

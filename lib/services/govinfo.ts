@@ -55,6 +55,9 @@ export async function searchBills(params: SearchBillsParams) {
 }
 
 export async function getPackageSummary(params: PackageSummaryParams) {
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), 15000);
+
 	try {
 		console.log('Fetching package summary for:', params.packageId);
 		
@@ -65,27 +68,36 @@ export async function getPackageSummary(params: PackageSummaryParams) {
 					Accept: 'application/json',
 					'X-Api-Key': process.env.GOV_INFO_API_KEY || '',
 				},
+				signal: controller.signal
 			}
 		);
 
+		clearTimeout(timeout);
+
 		if (!response.ok) {
-			const errorText = await response.text();
-			console.error('Failed to fetch package summary:', {
-				status: response.status,
-				statusText: response.statusText,
-				body: errorText,
-			});
+			if (response.status === 404) {
+				return { summary: 'No summary available' };
+			}
 			throw new Error(`Failed to fetch package summary: ${response.status} ${response.statusText}`);
 		}
 
 		const data = await response.json();
 
-		// Extract summary or process as needed
-		const summary = data?.summary || 'No summary available';
-		return { summary };
+		// Return just the summary to avoid redundancy with getBillDetails
+		return {
+			summary: data.summary || data.title || 'No summary available'
+		};
+
 	} catch (error) {
-		console.error('Error in getPackageSummary:', error);
+		if (error instanceof Error) {
+			if (error.name === 'AbortError') {
+				throw new Error(`Request timed out while fetching summary for ${params.packageId}`);
+			}
+			console.error('Error in getPackageSummary:', error.message);
+		}
 		throw error;
+	} finally {
+		clearTimeout(timeout);
 	}
 }
 
@@ -107,6 +119,9 @@ export async function getCollections() {
 
 
 export async function getBillDetails(packageId: string) {
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
 	try {
 		console.log('Fetching bill details for:', packageId);
 
@@ -117,6 +132,7 @@ export async function getBillDetails(packageId: string) {
 					Accept: 'application/json',
 					'X-Api-Key': process.env.GOV_INFO_API_KEY || '',
 				},
+				signal: controller.signal
 			}
 		);
 
@@ -132,7 +148,6 @@ export async function getBillDetails(packageId: string) {
 
 		const data = await response.json();
 
-		// Process and return the data as needed
 		return {
 			title: data.title,
 			congress: data.congress,
@@ -162,5 +177,7 @@ export async function getBillDetails(packageId: string) {
 	} catch (error) {
 		console.error('Error in getBillDetails:', error);
 		throw error;
+	} finally {
+		clearTimeout(timeout);
 	}
 }
