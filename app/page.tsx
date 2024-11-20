@@ -3,7 +3,7 @@
 import { Chat } from "@/components/ui/chat";
 import { getRandomSuggestions } from "@/lib/suggestions";
 import { useChat } from "ai/react";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function ChatDemo() {
@@ -16,26 +16,17 @@ export default function ChatDemo() {
     stop,
     isLoading,
   } = useChat({
-    onResponse(response) {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      console.log("response", response);
-    },
-    async onFinish(response) {
-      try {
-        console.log("finish", response);
-      } catch (error) {
-        console.error("Finish error:", error);
-      }
-    },
     onError: (error) => {
       console.log("error", error);
       toast.error("An error occurred while processing your request.");
     },
   });
 
-  const memoizedSuggestions = useMemo(() => getRandomSuggestions(3), []);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSuggestions(getRandomSuggestions(3));
+  }, []); // Empty dependency array means this runs once on mount
 
   const filteredMessages = messages.filter((message) => message.content !== "");
   return (
@@ -50,7 +41,7 @@ export default function ChatDemo() {
           isGenerating={isLoading}
           stop={stop}
           append={append}
-          suggestions={memoizedSuggestions}
+          suggestions={suggestions}
         />
       </div>
     </div>
