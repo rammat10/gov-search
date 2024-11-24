@@ -233,8 +233,6 @@ Sometimes the best way to understand a technology's governance challenges is to 
 
 After all, who better to understand the nuances of AI governance than the people who'll be helping write it?
 
-
-<!-- Footnotes themselves at the bottom. -->
 ## Notes
 
 [^1]:
