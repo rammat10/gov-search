@@ -77,6 +77,7 @@ The governance questions this raises include:
 * Who's liable when AI makes a mistake? [^2]
 
 * How do we train LLM’s and reward anticipated behavior? [^3]
+
 **Test Its Memory**
 
 Ask about a bill, then refer back to it in a follow-up question. Watch how its understanding of context sometimes fails.
@@ -86,6 +87,7 @@ This raises interesting questions about:
 * How do we ensure AI systems maintain accurate context? [^4]
 
 * What happens when AI systems handle ongoing conversations about policy or issues that present bias? [^5]
+
 **Push Its Boundaries** 
 
 Try asking about bills using different phrasings, or about complex legislative concepts. See where it gets confused.
@@ -100,7 +102,7 @@ Think about:
 
 ## **The geo-political complexities of modern AI**
 
-Want to understand the core challenges of AI governance? Here are three fundamental issues you can think about as you use our app, as outlined in Ben Buchanan’s *The AI Triad and What It Means for National Security. *[^10]
+Want to understand the core challenges of AI governance? Here are three fundamental issues you can think about as you use our app, as outlined in Ben Buchanan’s *The AI Triad and What It Means for National Security.* [^10]
 
 ## **Compute: Who Gets Access to AI Power?**
 
@@ -115,6 +117,7 @@ Lets extrapolate and ask questions about compute access: [^11]
 * What happens when AI resources are constrained?
 * How do we ensure equal access when computing costs money? 
 * What happens when powerful AI tools are only available to those who can afford the compute costs? [^12]
+
 Real-world implications:
 
 * Should there be priority access to compute resources, who benefits? [^13] 
@@ -142,7 +145,6 @@ Real-world implications:
 * Should government agencies have their own AI training data? [^18]
 * How do we ensure AI systems have current information?
 * What happens when private AI systems interpret public data?
-
 
 ## **Algorithms: Who Decides How AI Thinks?**
 
